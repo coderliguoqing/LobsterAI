@@ -1080,11 +1080,10 @@ export class OpenClawConfigSync {
           changed = true;
         }
       } else {
-        // Local sessions: always set 'ask' so the gateway emits approval events
-        // for dangerous-command interception in the adapter layer.
-        const execSecurity = typeof entry.execSecurity === 'string' ? entry.execSecurity.trim() : '';
-        if (execSecurity !== 'ask') {
-          entry.execSecurity = 'ask';
+        // Local sessions: remove any previously forced execSecurity override
+        // so the global on-miss + allowlist config takes effect.
+        if (typeof entry.execSecurity === 'string') {
+          delete entry.execSecurity;
           changed = true;
         }
       }

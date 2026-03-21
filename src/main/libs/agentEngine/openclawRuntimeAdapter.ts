@@ -903,7 +903,6 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
     }
 
     const sessionId = pending.sessionId;
-    const isRunActive = this.isSessionActive(sessionId);
 
     void client.request('exec.approval.resolve', {
       id: requestId,
@@ -911,7 +910,7 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
     }).then(() => {
       // If the agent run already ended while waiting for user approval,
       // continue the session so the model can see the actual command result.
-      if (!isRunActive) {
+      if (!this.isSessionActive(sessionId)) {
         const prompt = decision !== 'deny'
           ? t('execApprovalApproved')
           : t('execApprovalDenied');
@@ -2414,16 +2413,13 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
 
     this.pendingApprovals.set(requestId, { requestId, sessionId });
 
-    // For local (non-channel) sessions, auto-approve safe commands
-    // so only dangerous commands trigger the permission modal.
-    // Use 'allow-always' so OpenClaw adds the command to its allowlist,
-    // preventing future approval events for the same executable.
     const command = typeof request.command === 'string' ? request.command : '';
+
+    // For local (non-channel) sessions, mark safe commands as allowAlways
+    // so approving them via modal permanently adds them to the gateway allowlist.
     if (parseChannelSessionKey(sessionKey) === null) {
       if (command && !isDangerousCommand(command)) {
         this.pendingApprovals.set(requestId, { requestId, sessionId, allowAlways: true });
-        this.respondToPermission(requestId, { behavior: 'allow' });
-        return;
       }
     }
 
