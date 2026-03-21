@@ -433,8 +433,9 @@ export class OpenClawEngineManager extends EventEmitter {
       env.PATH = [cliShimDir, currentPath].filter(Boolean).join(path.delimiter);
     }
 
-    // Ensure Python runtime is available in the gateway environment (Windows only).
-    appendPythonRuntimeToEnv(env);
+    // Prepend bundled/user Python runtime paths so gateway exec commands
+    // find the LobsterAI-managed Python instead of the Windows Store stub.
+    appendPythonRuntimeToEnv(env as Record<string, string | undefined>);
     if (process.platform === 'win32') {
       env.PYTHONUTF8 = '1';
       env.PYTHONIOENCODING = 'utf-8';
