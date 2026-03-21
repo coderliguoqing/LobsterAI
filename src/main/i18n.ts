@@ -26,6 +26,13 @@ const translations: Record<LanguageType, Record<string, string>> = {
 
     // Timeout hint
     taskTimedOut: '[任务超时] 任务因超过最大允许时长而被自动停止。你可以继续对话以从中断处继续。',
+
+    // Feishu bot install
+    feishuVerifyCredentialsFailed: '凭证验证失败，请检查 App ID 和 App Secret 是否正确',
+    feishuVerifyFailed: '验证失败',
+
+    // Skill manager errors
+    skillErrNoSkillMd: '来源中未找到 SKILL.md',
   },
   en: {
     // Tray menu
@@ -39,6 +46,13 @@ const translations: Record<LanguageType, Record<string, string>> = {
 
     // Timeout hint
     taskTimedOut: '[Task timed out] The task was automatically stopped because it exceeded the maximum allowed duration. You can continue the conversation to pick up where it left off.',
+
+    // Feishu bot install
+    feishuVerifyCredentialsFailed: 'Credential validation failed. Please check your App ID and App Secret.',
+    feishuVerifyFailed: 'Verification failed',
+
+    // Skill manager errors
+    skillErrNoSkillMd: 'No SKILL.md found in source',
   },
 };
 
