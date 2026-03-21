@@ -576,7 +576,8 @@ export class OpenClawConfigSync {
         deny: [...MANAGED_TOOL_DENY],
         exec: {
           host: 'gateway',
-          ask: 'always',
+          security: 'allowlist',
+          ask: 'on-miss',
         },
         web: {
           search: {

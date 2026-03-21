@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../store';
 import type { CoworkPermissionRequest, CoworkPermissionResult } from '../../types/cowork';
 import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { i18nService } from '../../services/i18n';
@@ -63,6 +65,20 @@ const CoworkPermissionModal: React.FC<CoworkPermissionModalProps> = ({
   onRespond,
 }) => {
   const toolInput = permission.toolInput ?? {};
+
+  // Get the last assistant message as context for the approval modal
+  const currentSession = useSelector((state: RootState) => state.cowork.currentSession);
+  const assistantContext = useMemo(() => {
+    if (!currentSession?.messages) return '';
+    // Walk backwards to find the last assistant message before this tool call
+    for (let i = currentSession.messages.length - 1; i >= 0; i--) {
+      const msg = currentSession.messages[i];
+      if (msg.type === 'assistant' && msg.content.trim()) {
+        return msg.content.trim();
+      }
+    }
+    return '';
+  }, [currentSession?.messages]);
 
   const questions = useMemo<QuestionItem[]>(() => {
     if (permission.toolName !== 'AskUserQuestion') return [];
@@ -255,6 +271,14 @@ const CoworkPermissionModal: React.FC<CoworkPermissionModalProps> = ({
 
         {/* Content */}
         <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+          {/* Assistant context - shows the AI's explanation before the tool call */}
+          {!isQuestionTool && assistantContext && (
+            <div className="px-3 py-2 rounded-lg dark:bg-claude-darkBg bg-claude-bg">
+              <p className="text-sm dark:text-claude-darkText text-claude-text whitespace-pre-wrap">
+                {assistantContext}
+              </p>
+            </div>
+          )}
           {isQuestionTool ? (
             <>
               {questions.map((question) => {
