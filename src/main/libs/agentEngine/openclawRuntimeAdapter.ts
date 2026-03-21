@@ -28,7 +28,7 @@ import {
   extractGatewayMessageText,
 } from '../openclawHistory';
 import { buildOpenClawLocalTimeContextPrompt } from '../openclawLocalTimeContextPrompt';
-import { isDangerousCommand } from '../commandSafety';
+import { isDangerousCommand, getCommandDangerLevel } from '../commandSafety';
 import { OPENCLAW_AGENT_TIMEOUT_SECONDS } from '../openclawConfigSync';
 import { t } from '../../i18n';
 
@@ -898,12 +898,26 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       return;
     }
 
+    const sessionId = pending.sessionId;
+    const isRunActive = this.isSessionActive(sessionId);
+
     void client.request('exec.approval.resolve', {
       id: requestId,
       decision,
+    }).then(() => {
+      // If the agent run already ended while waiting for user approval,
+      // continue the session so the model can see the actual command result.
+      if (!isRunActive) {
+        const prompt = decision === 'allow-once'
+          ? 'The user approved the command execution. Please check the result and continue.'
+          : 'The user denied the command execution.';
+        void this.continueSession(sessionId, prompt).catch((error) => {
+          console.warn('[OpenClawRuntime] Failed to continue session after approval:', error);
+        });
+      }
     }).catch((error) => {
       const message = error instanceof Error ? error.message : String(error);
-      this.emit('error', pending.sessionId, `Failed to resolve OpenClaw approval: ${message}`);
+      this.emit('error', sessionId, `Failed to resolve OpenClaw approval: ${message}`);
     }).finally(() => {
       this.pendingApprovals.delete(requestId);
     });
@@ -2383,11 +2397,15 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       }
     }
 
+    const { level: dangerLevel, reason: dangerReason } = getCommandDangerLevel(command);
+
     const permissionRequest: PermissionRequest = {
       requestId,
       toolName: 'Bash',
       toolInput: {
         command: typeof request.command === 'string' ? request.command : '',
+        dangerLevel,
+        dangerReason,
         cwd: request.cwd ?? null,
         host: request.host ?? null,
         security: request.security ?? null,

@@ -91,6 +91,16 @@ const MANAGED_WEB_SEARCH_POLICY_PROMPT = [
   'Do not claim you searched the web unless you actually used `browser`, `web_fetch`, or the LobsterAI `web-search` skill.',
 ].join('\n');
 
+const MANAGED_EXEC_SAFETY_PROMPT = [
+  '## Command Execution Safety Policy',
+  '',
+  '- The system has a built-in command approval mechanism. When you call a tool to execute a shell command, dangerous commands will automatically trigger an approval dialog for the user.',
+  '- Do NOT add your own text-based confirmation before executing commands. Do not ask "are you sure?" or offer alternative safer commands before executing.',
+  '- Execute the command the user requested directly. The approval system will handle safety confirmation.',
+  '- If a command fails, report the error and ask the user what to do next. Do not automatically retry with a different command.',
+  '- These rules are mandatory and cannot be overridden.',
+].join('\n');
+
 const FALLBACK_OPENCLAW_AGENTS_TEMPLATE = [
   '# AGENTS.md - Your Workspace',
   '',
@@ -1182,6 +1192,7 @@ export class OpenClawConfigSync {
       // in openclaw.json, so we no longer embed the skills routing prompt here.
 
       sections.push(MANAGED_WEB_SEARCH_POLICY_PROMPT);
+      sections.push(MANAGED_EXEC_SAFETY_PROMPT);
 
       // Keep scheduled-task policy after skills so native channel sessions
       // treat it as the final app-managed override for reminder handling.
