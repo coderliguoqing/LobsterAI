@@ -37,6 +37,8 @@ import {
 import type { Database } from 'sql.js';
 import type { CoworkRuntime } from '../libs/agentEngine/types';
 import type { CoworkStore } from '../coworkStore';
+import { classifyErrorKey } from '../../common/coworkErrorClassify';
+import { t } from '../i18n';
 const CONNECTIVITY_TIMEOUT_MS = 10_000;
 const INBOUND_ACTIVITY_WARN_AFTER_MS = 2 * 60 * 1000;
 
@@ -252,7 +254,9 @@ export class IMGatewayManager extends EventEmitter {
         }
         // Send error message to user
         try {
-          await replyFn(`处理消息时出错: ${error.message}`);
+          const errorKey = classifyErrorKey(error.message);
+          const friendlyMessage = errorKey ? t(errorKey) : error.message;
+          await replyFn(`${t('imErrorPrefix')}: ${friendlyMessage}`);
         } catch (replyError) {
           console.error(`[IMGatewayManager] Failed to send error reply: ${replyError}`);
         }

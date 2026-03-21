@@ -12,7 +12,7 @@ interface CoworkState {
   sessions: CoworkSessionSummary[];
   currentSessionId: string | null;
   currentSession: CoworkSession | null;
-  draftPrompt: string;
+  draftPrompts: Record<string, string>;
   unreadSessionIds: string[];
   isCoworkActive: boolean;
   isStreaming: boolean;
@@ -24,7 +24,7 @@ const initialState: CoworkState = {
   sessions: [],
   currentSessionId: null,
   currentSession: null,
-  draftPrompt: '',
+  draftPrompts: {},
   unreadSessionIds: [],
   isCoworkActive: false,
   isStreaming: false,
@@ -142,8 +142,13 @@ const coworkSlice = createSlice({
       }
     },
 
-    setDraftPrompt(state, action: PayloadAction<string>) {
-      state.draftPrompt = action.payload;
+    setDraftPrompt(state, action: PayloadAction<{ sessionId: string; draft: string }>) {
+      const { sessionId, draft } = action.payload;
+      if (draft) {
+        state.draftPrompts[sessionId] = draft;
+      } else {
+        delete state.draftPrompts[sessionId];
+      }
     },
 
     addSession(state, action: PayloadAction<CoworkSession>) {

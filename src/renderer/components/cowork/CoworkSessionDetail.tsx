@@ -28,7 +28,7 @@ import { getScheduledReminderDisplayText } from '../../../common/scheduledRemind
 
 interface CoworkSessionDetailProps {
   onManageSkills?: () => void;
-  onContinue: (prompt: string, skillPrompt?: string, imageAttachments?: CoworkImageAttachment[]) => void;
+  onContinue: (prompt: string, skillPrompt?: string, imageAttachments?: CoworkImageAttachment[]) => boolean | void | Promise<boolean | void>;
   onStop: () => void;
   onNavigateHome?: () => void;
   isSidebarCollapsed?: boolean;
@@ -2093,6 +2093,7 @@ const CoworkSessionDetail: React.FC<CoworkSessionDetailProps> = ({
             onManageSkills={onManageSkills}
             size="large"
             showModelSelector={true}
+            sessionId={currentSession?.id}
           />
         </div>
       </div>
