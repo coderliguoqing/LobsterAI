@@ -2384,17 +2384,18 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       return;
     }
 
-    this.pendingApprovals.set(requestId, { requestId, sessionId });
-
     const command = typeof request.command === 'string' ? request.command : '';
+    const isLocalSession = parseChannelSessionKey(sessionKey) === null;
+    const dangerous = command ? isDangerousCommand(command) : false;
 
-    // For local (non-channel) sessions, mark safe commands as allowAlways
-    // so approving them via modal permanently adds them to the gateway allowlist.
-    if (parseChannelSessionKey(sessionKey) === null) {
-      if (command && !isDangerousCommand(command)) {
-        this.pendingApprovals.set(requestId, { requestId, sessionId, allowAlways: true });
-      }
+    // Auto-approve safe commands: resolve immediately via gateway without showing the modal.
+    if (isLocalSession && !dangerous) {
+      this.pendingApprovals.set(requestId, { requestId, sessionId, allowAlways: true });
+      this.respondToPermission(requestId, { behavior: 'allow', updatedInput: {} });
+      return;
     }
+
+    this.pendingApprovals.set(requestId, { requestId, sessionId });
 
     const { level: dangerLevel, reason: dangerReason } = getCommandDangerLevel(command);
 
