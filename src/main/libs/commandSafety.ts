@@ -7,6 +7,7 @@
 const DELETE_COMMAND_RE = /\b(rm|rmdir|unlink|del|erase|remove-item|trash)\b/i;
 const FIND_DELETE_COMMAND_RE = /\bfind\b[\s\S]*\s-delete\b/i;
 const GIT_CLEAN_COMMAND_RE = /\bgit\s+clean\b/i;
+const OSASCRIPT_DELETE_RE = /\bosascript\b[\s\S]*\bdelete\b/i;
 
 // Destructive patterns (high severity)
 const RM_RECURSIVE_RE = /\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f?|--recursive)\b/i;
@@ -29,7 +30,8 @@ export type DangerLevel = 'safe' | 'caution' | 'destructive';
 export function isDeleteCommand(command: string): boolean {
   return DELETE_COMMAND_RE.test(command)
     || FIND_DELETE_COMMAND_RE.test(command)
-    || GIT_CLEAN_COMMAND_RE.test(command);
+    || GIT_CLEAN_COMMAND_RE.test(command)
+    || OSASCRIPT_DELETE_RE.test(command);
 }
 
 /**

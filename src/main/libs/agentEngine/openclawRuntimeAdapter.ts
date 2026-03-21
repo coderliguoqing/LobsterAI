@@ -909,8 +909,8 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       // continue the session so the model can see the actual command result.
       if (!isRunActive) {
         const prompt = decision === 'allow-once'
-          ? 'The user approved the command execution. Please check the result and continue.'
-          : 'The user denied the command execution.';
+          ? t('execApprovalApproved')
+          : t('execApprovalDenied');
         void this.continueSession(sessionId, prompt).catch((error) => {
           console.warn('[OpenClawRuntime] Failed to continue session after approval:', error);
         });

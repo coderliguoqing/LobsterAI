@@ -47,6 +47,10 @@ const translations: Record<LanguageType, Record<string, string>> = {
     coworkErrorEngineNotReady: 'AI 引擎正在启动中，请稍等几秒后重试。',
     imErrorPrefix: '处理消息时出错',
 
+    // Exec approval continuation
+    execApprovalApproved: '用户已确认执行该命令，请检查执行结果并继续。',
+    execApprovalDenied: '用户已拒绝执行该命令。',
+
     // Skill manager errors
     skillErrNoSkillMd: '来源中未找到 SKILL.md',
   },
@@ -82,6 +86,10 @@ const translations: Record<LanguageType, Record<string, string>> = {
     coworkErrorServerError: 'Server error occurred. Please try again later.',
     coworkErrorEngineNotReady: 'AI engine is starting up. Please wait a few seconds and try again.',
     imErrorPrefix: 'Error processing message',
+
+    // Exec approval continuation
+    execApprovalApproved: 'The user approved the command execution. Please check the result and continue.',
+    execApprovalDenied: 'The user denied the command execution.',
 
     // Skill manager errors
     skillErrNoSkillMd: 'No SKILL.md found in source',
