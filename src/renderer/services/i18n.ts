@@ -1058,6 +1058,13 @@ const translations: Record<LanguageType, Record<string, string>> = {
     scheduledTasksSessionKey: '会话键',
     scheduledTasksToggleWarningAtPast: '该任务的执行时间已过，启用后将不会运行',
     scheduledTasksToggleWarningExpired: '该任务已过期，启用后将不会运行',
+
+    // 隐私协议弹窗
+    privacyDialogTitle: '网易有道LobsterAI服务协议',
+    privacyDialogDesc: '在使用网易有道LobsterAI之前，请您仔细阅读{link}内容，并进行确认。',
+    privacyDialogLinkText: '网易有道LobsterAI服务协议',
+    privacyDialogAccept: '我已阅读并同意',
+    privacyDialogReject: '拒绝',
   },
   en: {
     // Common
@@ -2112,6 +2119,13 @@ const translations: Record<LanguageType, Record<string, string>> = {
     scheduledTasksSessionKey: 'Session Key',
     scheduledTasksToggleWarningAtPast: 'The execution time of this task has passed. It will not run after enabling',
     scheduledTasksToggleWarningExpired: 'This task has expired. It will not run after enabling',
+
+    // Privacy dialog
+    privacyDialogTitle: 'NetEase Youdao LobsterAI Terms of Service',
+    privacyDialogDesc: 'Before using NetEase Youdao LobsterAI, please carefully read the {link} and confirm.',
+    privacyDialogLinkText: 'NetEase Youdao LobsterAI Terms of Service',
+    privacyDialogAccept: 'I have read and agree',
+    privacyDialogReject: 'Decline',
   }
 };
 
