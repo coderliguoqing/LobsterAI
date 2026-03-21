@@ -151,6 +151,8 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.invoke('cowork:session:rename', options),
     getSession: (sessionId: string) =>
       ipcRenderer.invoke('cowork:session:get', sessionId),
+    remoteManaged: (sessionId: string) =>
+      ipcRenderer.invoke('cowork:session:remoteManaged', sessionId),
     listSessions: () =>
       ipcRenderer.invoke('cowork:session:list'),
     exportResultImage: (options: { rect: { x: number; y: number; width: number; height: number }; defaultFileName?: string }) =>

@@ -27,6 +27,8 @@ const ERROR_RULES: Array<[RegExp, string]> = [
   [/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|could not connect|connection.*refused|network.*error/i, 'coworkErrorNetworkError'],
   // Server errors: HTTP 500/502/503
   [/internal.server.error|bad.gateway|service.unavailable|\b50[023]\b/i, 'coworkErrorServerError'],
+  // Unknown / unclassified errors from upstream (OpenClaw wraps unrecognized errors)
+  [/unknown error|an unknown error occurred/i, 'coworkErrorUnknown'],
 ];
 
 /**

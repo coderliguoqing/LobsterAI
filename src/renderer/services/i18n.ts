@@ -401,6 +401,7 @@ const translations: Record<LanguageType, Record<string, string>> = {
     coworkDescription: '7×24 小时帮你干活的全场景个人助理 Agent',
     coworkNewSession: '新会话',
     coworkContinuePlaceholder: '继续对话...',
+    coworkRemoteManagedPlaceholder: '该会话由 IM 通道创建，请在对应的 IM 平台操作',
     updateAvailablePill: '有新版本',
     updateAvailableTitle: '检测到新版本',
     updateAvailableMessage: '检测到新版本，请前往官网下载并覆盖安装。',
@@ -464,6 +465,7 @@ const translations: Record<LanguageType, Record<string, string>> = {
     coworkErrorSessionStartFailed: '会话启动失败：{error}',
     coworkErrorSessionContinueFailed: '发送消息失败：{error}',
     coworkErrorEngineNotReady: 'AI 引擎正在启动中，请稍等几秒后重试。',
+    coworkErrorUnknown: '任务执行出错，请重试。如果问题持续出现，请检查模型配置。',
 
     // Skills
     skills: '技能',
@@ -1462,6 +1464,7 @@ const translations: Record<LanguageType, Record<string, string>> = {
     coworkDescription: 'A 24/7 personal assistant agent that gets work done for you',
     coworkNewSession: 'New Session',
     coworkContinuePlaceholder: 'Continue the conversation...',
+    coworkRemoteManagedPlaceholder: 'This session was created via IM. Please use the corresponding IM platform.',
     updateAvailablePill: 'New update',
     updateAvailableTitle: 'New version available',
     updateAvailableMessage: 'A new version is available. Please download it from the official website and install over the current version.',
@@ -1525,6 +1528,7 @@ const translations: Record<LanguageType, Record<string, string>> = {
     coworkErrorSessionStartFailed: 'Failed to start session: {error}',
     coworkErrorSessionContinueFailed: 'Failed to send message: {error}',
     coworkErrorEngineNotReady: 'AI engine is starting up. Please wait a few seconds and try again.',
+    coworkErrorUnknown: 'Task failed due to an unexpected error. Please retry. If the issue persists, check your model configuration.',
 
     // Skills
     skills: 'Skills',

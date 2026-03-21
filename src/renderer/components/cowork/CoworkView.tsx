@@ -466,9 +466,6 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
       : 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300'
     }`}>
       <div className="flex items-center gap-2">
-        {!isEngineError && openClawStatus.phase === 'starting' && (
-          <div className="h-3 w-3 rounded-full bg-amber-400 animate-pulse" />
-        )}
         <span>{resolveEngineStatusText(openClawStatus)}</span>
         {typeof openClawStatus.progressPercent === 'number' && (
           <span className="opacity-70">({Math.round(openClawStatus.progressPercent)}%)</span>
@@ -477,7 +474,7 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
       <button
         type="button"
         onClick={handleRestartGateway}
-        disabled={isRestartingGateway || openClawStatus.phase === 'starting'}
+        disabled={isRestartingGateway}
         className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isEngineError
           ? 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600'
           : 'bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600'

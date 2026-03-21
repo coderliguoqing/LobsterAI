@@ -9,6 +9,7 @@ import {
   addMessage,
   updateMessageContent,
   setStreaming,
+  setRemoteManaged,
   updateSessionPinned,
   updateSessionTitle,
   enqueuePendingPermission,
@@ -465,6 +466,12 @@ class CoworkService {
       }
       store.dispatch(setCurrentSession(result.session));
       store.dispatch(setStreaming(result.session.status === 'running'));
+
+      const imResult = await cowork.remoteManaged(sessionId);
+      if (requestId === this.latestLoadSessionRequestId) {
+        store.dispatch(setRemoteManaged(imResult?.remoteManaged ?? false));
+      }
+
       return result.session;
     }
 

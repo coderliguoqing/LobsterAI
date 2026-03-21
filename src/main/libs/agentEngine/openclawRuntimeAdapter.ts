@@ -744,14 +744,12 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
     }
     try {
       const params = { activeMinutes: 60, limit: CHANNEL_SESSION_DISCOVERY_LIMIT };
-      console.log('[ChannelSync] pollChannelSessions: calling sessions.list with', JSON.stringify(params));
       const result = await this.gatewayClient.request('sessions.list', params);
       const sessions = (result as Record<string, unknown>)?.sessions;
       if (!Array.isArray(sessions)) {
         console.warn('[ChannelSync] pollChannelSessions: sessions.list returned non-array sessions:', typeof sessions, 'full result keys:', Object.keys(result as Record<string, unknown>));
         return;
       }
-      console.log('[ChannelSync] pollChannelSessions: got', sessions.length, 'sessions, keys:', sessions.map((s: Record<string, unknown>) => s?.key).join(', '));
       let hasNew = false;
       let channelCount = 0;
       const newSessionsToSync: Array<{ sessionId: string; sessionKey: string }> = [];
@@ -773,7 +771,6 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
         channelCount++;
         // Use resolveOrCreateSession so new channel sessions are auto-created
         const sessionId = this.channelSessionSync.resolveOrCreateSession(key);
-        console.log('[ChannelSync] pollChannelSessions: channel key=', key, '→ sessionId=', sessionId, 'alreadyKnown=', sessionId ? this.knownChannelSessionIds.has(sessionId) : 'n/a');
         if (sessionId && !this.knownChannelSessionIds.has(sessionId)) {
           this.knownChannelSessionIds.add(sessionId);
           this.rememberSessionKey(sessionId, key);
@@ -784,7 +781,6 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
           }
         }
       }
-      console.log('[ChannelSync] pollChannelSessions: found', channelCount, 'channel sessions, hasNew=', hasNew, 'windowCount=', BrowserWindow.getAllWindows().length);
       if (hasNew) {
         let notified = 0;
         for (const win of BrowserWindow.getAllWindows()) {
@@ -793,7 +789,7 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
             notified++;
           }
         }
-        console.log('[ChannelSync] pollChannelSessions: notified', notified, 'renderer windows via cowork:sessions:changed');
+        console.log('[ChannelSync] discovered', channelCount, 'channel sessions, notified', notified, 'windows');
       }
       // Sync full history for newly discovered sessions
       for (const { sessionId, sessionKey } of newSessionsToSync) {
@@ -2163,13 +2159,6 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       return;
     }
 
-    console.debug('[Debug:splitBeforeTool] assistantMessageId:', turn.assistantMessageId,
-      'currentText.length:', turn.currentText.length,
-      'committedAssistantText.length:', turn.committedAssistantText.length,
-      'currentAssistantSegmentText.length:', turn.currentAssistantSegmentText.length,
-      'currentText:', turn.currentText.slice(0, 100),
-      'pendingTimer:', this.pendingMessageUpdateTimer.has(turn.assistantMessageId));
-
     const segmentText = turn.currentAssistantSegmentText.trim();
     if (segmentText) {
       const committedCandidate = `${turn.committedAssistantText}${segmentText}`;
@@ -2186,8 +2175,7 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       }
     }
 
-    // Keep assistantMessageId so subsequent text appends to the same message
-    // instead of creating a new fragmented message after each tool_use block
+    turn.assistantMessageId = null;
     turn.currentAssistantSegmentText = '';
   }
 
@@ -2229,7 +2217,6 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
     if (segmentText === previousSegmentText && streamedText === previousText) return;
 
     if (!turn.assistantMessageId) {
-      console.debug('[Debug:handleChatDelta] CREATE assistant msg, segmentText.length:', segmentText.length, 'text:', segmentText.slice(0, 60));
       const assistantMessage = this.store.addMessage(sessionId, {
         type: 'assistant',
         content: segmentText,
@@ -2245,23 +2232,15 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
     }
 
     if (turn.assistantMessageId && segmentText !== previousSegmentText) {
-      // Send full accumulated text so the message contains the complete assistant
-      // response, not just the latest fragment after the last tool_use block.
-      // streamedText is the raw full text from OpenClaw; committed + segment
-      // reconstructs the same thing, so we use streamedText directly.
-      const fullContent = turn.committedAssistantText
-        ? streamedText.trim()
-        : segmentText;
-      console.debug('[Debug:handleChatDelta] UPDATE assistant msg, fullContent.length:', fullContent.length, 'committed.length:', turn.committedAssistantText.length, 'text:', fullContent.slice(0, 60));
       this.store.updateMessage(sessionId, turn.assistantMessageId, {
-        content: fullContent,
+        content: segmentText,
         metadata: {
           isStreaming: true,
           isFinal: false,
         },
       });
       turn.currentAssistantSegmentText = segmentText;
-      this.throttledEmitMessageUpdate(sessionId, turn.assistantMessageId, fullContent);
+      this.throttledEmitMessageUpdate(sessionId, turn.assistantMessageId, segmentText);
     }
   }
 
@@ -2280,21 +2259,15 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
     if (turn.assistantMessageId) {
       const persistedSegmentText = finalSegmentText || previousSegmentText;
       if (persistedSegmentText) {
-        // Send full accumulated text for the final message.
-        // Fall back to persistedSegmentText when finalText is empty (e.g. final
-        // event contains only tool_use blocks with no text).
-        const fullContent = turn.committedAssistantText
-          ? ((finalText || '').trim() || persistedSegmentText)
-          : persistedSegmentText;
         this.store.updateMessage(sessionId, turn.assistantMessageId, {
-          content: fullContent,
+          content: persistedSegmentText,
           metadata: {
             isStreaming: false,
             isFinal: true,
           },
         });
         if (persistedSegmentText !== previousSegmentText) {
-          this.emit('messageUpdate', sessionId, turn.assistantMessageId, fullContent);
+          this.emit('messageUpdate', sessionId, turn.assistantMessageId, persistedSegmentText);
         }
       }
     } else if (finalSegmentText) {
@@ -2698,24 +2671,18 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       const session = this.store.getSession(sessionId);
       const currentMessage = session?.messages.find((message) => message.id === turn.assistantMessageId);
       const currentText = currentMessage?.content.trim() ?? '';
-      // Use full accumulated text (canonicalText) when committed text exists,
-      // to stay consistent with handleChatDelta/handleChatFinal which store
-      // the complete assistant response in a single message.
-      const persistContent = turn.committedAssistantText
-        ? (canonicalText.trim() || canonicalSegmentText)
-        : canonicalSegmentText;
-      if (persistContent === currentText) {
+      if (canonicalSegmentText === currentText) {
         return;
       }
 
       this.store.updateMessage(sessionId, turn.assistantMessageId, {
-        content: persistContent,
+        content: canonicalSegmentText,
         metadata: {
           isStreaming: false,
           isFinal: true,
         },
       });
-      this.emit('messageUpdate', sessionId, turn.assistantMessageId, persistContent);
+      this.emit('messageUpdate', sessionId, turn.assistantMessageId, canonicalSegmentText);
     } catch (error) {
       console.warn('[OpenClawRuntime] chat.history sync after final failed:', error);
     }
@@ -2876,11 +2843,9 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
    * the requested message count is reached.
    */
   private syncChannelUserMessages(sessionId: string, historyMessages: unknown[], latestOnly = false, isDiscord = false, isQQ = false): void {
-    console.log('[Debug:syncChannelUserMessages] sessionId:', sessionId, 'historyMessages:', historyMessages.length, 'latestOnly:', latestOnly, 'isQQ:', isQQ);
     const historyEntries = this.collectChannelHistoryEntries(historyMessages, isDiscord, isQQ);
 
     const cursor = this.channelSyncCursor.get(sessionId) ?? 0;
-    console.log('[Debug:syncChannelUserMessages] cursor:', cursor, 'history entries:', historyEntries.length);
 
     // When latestOnly is true (e.g. session re-created after deletion),
     // only sync the last user message — the one that triggered this turn.
@@ -2895,7 +2860,6 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
             metadata: {},
           });
           this.emit('message', sessionId, userMessage);
-          console.log('[Debug:syncChannelUserMessages] latestOnly: synced last user message');
         }
       }
       this.channelSyncCursor.set(sessionId, historyEntries.length);
@@ -2903,17 +2867,7 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
     }
 
     const localEntries = this.collectLocalChannelEntries(sessionId);
-    const { firstNewIdx, strategy } = this.computeChannelHistoryFirstNewIndex(localEntries, historyEntries, cursor);
-    console.log(
-      '[Debug:syncChannelUserMessages] continuation strategy:',
-      strategy,
-      'firstNewIdx:',
-      firstNewIdx,
-      'local entries:',
-      localEntries.length,
-      'history entries:',
-      historyEntries.length,
-    );
+    const { firstNewIdx } = this.computeChannelHistoryFirstNewIndex(localEntries, historyEntries, cursor);
 
     // Sync user messages from gateway history.
     // Only sync user messages here — assistant messages are already added by the
@@ -2987,7 +2941,7 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
           content: entry.text,
           metadata: {},
         });
-        console.log('[Debug:syncChannelUserMessages] inserted user message before assistant, sessionId:', sessionId, 'idx:', idx, 'firstNewIdx:', firstNewIdx);
+        console.debug('[syncChannelUserMessages] inserted user message before assistant, sessionId:', sessionId);
       } else {
         userMessage = this.store.addMessage(sessionId, {
           type: 'user',
@@ -3001,7 +2955,6 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
     }
 
     this.channelSyncCursor.set(sessionId, historyEntries.length);
-    console.log('[Debug:syncChannelUserMessages] synced', syncedCount, 'new messages (firstNewIdx:', firstNewIdx, ', newCursor:', historyEntries.length, ')');
   }
 
   private getUserMessageCount(sessionId: string): number {

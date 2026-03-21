@@ -2179,6 +2179,19 @@ if (!gotTheLock) {
     try {
       const coworkStoreInstance = getCoworkStore();
       coworkStoreInstance.deleteSessions(sessionIds);
+      const router = getCoworkEngineRouter();
+      for (const sessionId of sessionIds) {
+        try {
+          getIMGatewayManager()?.getIMStore()?.deleteSessionMappingByCoworkSessionId(sessionId);
+        } catch {
+          // IM store may not be initialised yet; safe to ignore.
+        }
+        try {
+          router.onSessionDeleted(sessionId);
+        } catch {
+          // Router may not be initialised yet; safe to ignore.
+        }
+      }
       return { success: true };
     } catch (error) {
       return {
@@ -2226,6 +2239,19 @@ if (!gotTheLock) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to get session',
+      };
+    }
+  });
+
+  ipcMain.handle('cowork:session:remoteManaged', async (_event, sessionId: string) => {
+    try {
+      const mapping = getIMGatewayManager()?.getIMStore()?.getSessionMappingByCoworkSessionId(sessionId);
+      return { success: true, remoteManaged: !!mapping };
+    } catch (error) {
+      return {
+        success: false,
+        remoteManaged: false,
+        error: error instanceof Error ? error.message : 'Failed to check remote managed session',
       };
     }
   });

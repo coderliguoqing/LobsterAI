@@ -516,7 +516,10 @@ export class OpenClawConfigSync {
 
     const workspaceDir = (coworkConfig.workingDirectory || '').trim();
 
-    const preinstalledPluginIds = readPreinstalledPluginIds();
+    // Filter to only plugins that actually exist in the extensions directory.
+    // This avoids OpenClaw warnings about missing plugins (e.g. "nim" when NIM
+    // extension is not bundled).
+    const preinstalledPluginIds = readPreinstalledPluginIds().filter((id) => isBundledPluginAvailable(id));
     const hasMcpBridgePlugin = isBundledPluginAvailable('mcp-bridge');
 
     const dingTalkConfig = this.getDingTalkConfig();
@@ -1261,7 +1264,7 @@ export class OpenClawConfigSync {
    * user sets up a model in the UI.
    */
   private writeMinimalConfig(configPath: string, _reason: string): OpenClawConfigSyncResult {
-    const preinstalledPluginIds = readPreinstalledPluginIds();
+    const preinstalledPluginIds = readPreinstalledPluginIds().filter((id) => isBundledPluginAvailable(id));
 
     const minimalConfig: Record<string, unknown> = {
       gateway: {

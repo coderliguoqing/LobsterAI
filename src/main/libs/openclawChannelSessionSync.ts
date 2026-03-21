@@ -211,8 +211,6 @@ export class OpenClawChannelSessionSync {
    * Returns the local sessionId if the sessionKey belongs to a channel, or null if not.
    */
   resolveOrCreateSession(sessionKey: string): string | null {
-    console.log('[ChannelSessionSync] resolveOrCreateSession called with key:', sessionKey);
-
     // 1. Skip LobsterAI-originated sessions
     if (isManagedSessionKey(sessionKey)) {
       console.log('[ChannelSessionSync] skipped: LobsterAI-originated session');

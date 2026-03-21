@@ -302,6 +302,7 @@ interface IElectronAPI {
     setSessionPinned: (options: { sessionId: string; pinned: boolean }) => Promise<{ success: boolean; error?: string }>;
     renameSession: (options: { sessionId: string; title: string }) => Promise<{ success: boolean; error?: string }>;
     getSession: (sessionId: string) => Promise<{ success: boolean; session?: CoworkSession; error?: string }>;
+    remoteManaged: (sessionId: string) => Promise<{ success: boolean; remoteManaged: boolean; error?: string }>;
     listSessions: () => Promise<{ success: boolean; sessions?: CoworkSessionSummary[]; error?: string }>;
     exportResultImage: (options: {
       rect: { x: number; y: number; width: number; height: number };
