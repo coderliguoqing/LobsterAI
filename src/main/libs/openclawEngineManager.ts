@@ -5,7 +5,7 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import net from 'net';
 import path from 'path';
-import { getElectronNodeRuntimePath } from './coworkUtil';
+import { getElectronNodeRuntimePath, ensureElectronNodeShim } from './coworkUtil';
 import { syncLocalOpenClawExtensionsIntoRuntime } from './openclawLocalExtensions';
 import { applyBundledOpenClawRuntimeHotfixes } from './openclawRuntimeHotfix';
 import { appendPythonRuntimeToEnv } from './pythonRuntime';
@@ -439,6 +439,18 @@ export class OpenClawEngineManager extends EventEmitter {
     if (process.platform === 'win32') {
       env.PYTHONUTF8 = '1';
       env.PYTHONIOENCODING = 'utf-8';
+    }
+
+    // Inject node/npm/npx shims so gateway exec commands can use them.
+    // The shims wrap Electron as a Node.js runtime via ELECTRON_RUN_AS_NODE=1.
+    const npmBinDir = app.isPackaged
+      ? path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'npm', 'bin')
+      : undefined;
+    const nodeShimDir = ensureElectronNodeShim(electronNodeRuntimePath, npmBinDir);
+    if (nodeShimDir) {
+      const curPath = env.PATH || env.Path || '';
+      env.PATH = [nodeShimDir, curPath].filter(Boolean).join(path.delimiter);
+      env.LOBSTERAI_NPM_BIN_DIR = npmBinDir || '';
     }
 
     if (isSystemProxyEnabled()) {

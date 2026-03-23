@@ -288,10 +288,10 @@ contextBridge.exposeInMainWorld('electron', {
     syncConfig: () => ipcRenderer.invoke('im:config:sync'),
 
     // Gateway control
-    startGateway: (platform: 'dingtalk' | 'feishu' | 'telegram' | 'discord' | 'nim' | 'xiaomifeng' | 'wecom' | 'popo') => ipcRenderer.invoke('im:gateway:start', platform),
-    stopGateway: (platform: 'dingtalk' | 'feishu' | 'telegram' | 'discord' | 'nim' | 'xiaomifeng' | 'wecom' | 'popo') => ipcRenderer.invoke('im:gateway:stop', platform),
+    startGateway: (platform: 'dingtalk' | 'feishu' | 'telegram' | 'discord' | 'nim' | 'xiaomifeng' | 'wecom' | 'popo' | 'weixin') => ipcRenderer.invoke('im:gateway:start', platform),
+    stopGateway: (platform: 'dingtalk' | 'feishu' | 'telegram' | 'discord' | 'nim' | 'xiaomifeng' | 'wecom' | 'popo' | 'weixin') => ipcRenderer.invoke('im:gateway:stop', platform),
     testGateway: (
-      platform: 'dingtalk' | 'feishu' | 'telegram' | 'discord' | 'nim' | 'xiaomifeng' | 'wecom' | 'popo',
+      platform: 'dingtalk' | 'feishu' | 'telegram' | 'discord' | 'nim' | 'xiaomifeng' | 'wecom' | 'popo' | 'weixin',
       configOverride?: any
     ) => ipcRenderer.invoke('im:gateway:test', platform, configOverride),
 
@@ -301,6 +301,10 @@ contextBridge.exposeInMainWorld('electron', {
     // OpenClaw config schema
     getOpenClawConfigSchema: () => ipcRenderer.invoke('im:openclaw:config-schema'),
 
+
+    // Weixin QR login
+    weixinQrLoginStart: () => ipcRenderer.invoke('im:weixin:qr-login-start'),
+    weixinQrLoginWait: (accountId?: string) => ipcRenderer.invoke('im:weixin:qr-login-wait', accountId),
 
     // Pairing
     listPairingRequests: (platform: string) => ipcRenderer.invoke('im:pairing:list', platform),

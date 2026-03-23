@@ -792,6 +792,13 @@ const getOpenClawConfigSync = (): OpenClawConfigSync => {
           return null;
         }
       },
+      getWeixinConfig: () => {
+        try {
+          return getIMGatewayManager().getConfig().weixin;
+        } catch {
+          return null;
+        }
+      },
       getDiscordOpenClawConfig: () => {
         try {
           return getIMGatewayManager()?.getConfig()?.discord ?? null;
@@ -2876,7 +2883,7 @@ if (!gotTheLock) {
       // Only trigger sync when explicitly requested via syncGateway flag (e.g. from
       // the global Save button), to avoid frequent gateway restarts on every field blur.
       const hasOpenClawChange = config.telegram || config.discord || config.dingtalk
-        || config.feishu || config.qq || config.wecom || config.popo;
+        || config.feishu || config.qq || config.wecom || config.popo || config.weixin;
       if (options?.syncGateway && hasOpenClawChange && getOpenClawEngineManager().getStatus().phase === 'running') {
         scheduleImConfigSync();
       }
@@ -2949,6 +2956,31 @@ if (!gotTheLock) {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to test gateway connectivity',
       };
+    }
+  });
+
+  // Weixin QR login
+  ipcMain.handle('im:weixin:qr-login-start', async () => {
+    try {
+      const result = await getIMGatewayManager().weixinQrLoginStart();
+      return { success: true, ...result };
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : 'Failed to start Weixin QR login' };
+    }
+  });
+
+  ipcMain.handle('im:weixin:qr-login-wait', async (_event, accountId?: string) => {
+    try {
+      const result = await getIMGatewayManager().weixinQrLoginWait(accountId);
+      if (result.connected) {
+        // Restart gateway so the plugin picks up the new token and starts
+        // a fresh monitor loop (the old one may be stuck in a session pause).
+        console.log('[IMGatewayManager] Weixin login succeeded, restarting OpenClaw gateway');
+        await getOpenClawEngineManager().restartGateway();
+      }
+      return { success: true, ...result };
+    } catch (error) {
+      return { success: false, connected: false, message: error instanceof Error ? error.message : 'Weixin QR login failed' };
     }
   });
 
